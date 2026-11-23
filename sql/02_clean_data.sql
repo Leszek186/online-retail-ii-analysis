@@ -96,3 +96,38 @@ INTO dbo.tx_cancel
 FROM dbo.tx_dedup
 WHERE invoice LIKE 'C%';
 
+
+-- 3d. Keep only products
+-- A product stock code is 5 digits plus an optional 1-2 letters, e.g. 85123A.
+-- Everything else is postage, fees, vouchers, manual or test entries.
+-- Count non-product rows in sales (expected: 4790) and in cancellations (expected: 1190)
+SELECT COUNT(*) AS n_non_product
+FROM dbo.tx_sales
+WHERE NOT ( stock_code LIKE '[0-9][0-9][0-9][0-9][0-9]'
+         OR stock_code LIKE '[0-9][0-9][0-9][0-9][0-9][A-Za-z]'
+         OR stock_code LIKE '[0-9][0-9][0-9][0-9][0-9][A-Za-z][A-Za-z]' );
+
+-- What are these codes? (POST, DOT, M, C2, ADJUST, BANK CHARGES, gift vouchers, ...)
+SELECT stock_code, COUNT(*) AS n
+FROM dbo.tx_sales
+WHERE NOT ( stock_code LIKE '[0-9][0-9][0-9][0-9][0-9]'
+         OR stock_code LIKE '[0-9][0-9][0-9][0-9][0-9][A-Za-z]'
+         OR stock_code LIKE '[0-9][0-9][0-9][0-9][0-9][A-Za-z][A-Za-z]' )
+GROUP BY stock_code
+ORDER BY n DESC;
+
+-- Remove them (expected: 4790 rows from sales, 1190 from cancellations)
+DELETE FROM dbo.tx_sales
+WHERE NOT ( stock_code LIKE '[0-9][0-9][0-9][0-9][0-9]'
+         OR stock_code LIKE '[0-9][0-9][0-9][0-9][0-9][A-Za-z]'
+         OR stock_code LIKE '[0-9][0-9][0-9][0-9][0-9][A-Za-z][A-Za-z]' );
+
+DELETE FROM dbo.tx_cancel
+WHERE NOT ( stock_code LIKE '[0-9][0-9][0-9][0-9][0-9]'
+         OR stock_code LIKE '[0-9][0-9][0-9][0-9][0-9][A-Za-z]'
+         OR stock_code LIKE '[0-9][0-9][0-9][0-9][0-9][A-Za-z][A-Za-z]' );
+
+-- Check (expected: tx_sales 1009142, tx_cancel 17914)
+SELECT 'tx_sales' AS tabela, COUNT(*) AS n_rows FROM dbo.tx_sales
+UNION ALL
+SELECT 'tx_cancel', COUNT(*) FROM dbo.tx_cancel;
