@@ -9,7 +9,7 @@ Work in progress. I am analysing two years of transactions from a UK online gift
 
 ## Plan
 - [x] Load the data into a SQL database
-- [ ] Clean the data in SQL
+- [x] Clean the data in SQL
 - [ ] Net revenue, concentration, seasonality, RFM in SQL
 - [ ] Repeat the key steps in Excel / Power Query
 - [ ] Cross-check the results in Python
