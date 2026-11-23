@@ -154,3 +154,27 @@ WHERE quantity >= 0 OR unit_price <= 0;
 SELECT 'tx_sales' AS tabela, COUNT(*) AS n_rows FROM dbo.tx_sales
 UNION ALL
 SELECT 'tx_cancel', COUNT(*) FROM dbo.tx_cancel;
+
+
+-- 3f. Views for the analysis layer
+-- revenue = quantity * unit_price (negative for cancellations)
+GO
+
+CREATE VIEW dbo.v_sales AS
+SELECT invoice, stock_code, description, quantity, unit_price,
+       quantity * unit_price AS revenue,
+       invoice_date, customer_id, country
+FROM dbo.tx_sales;
+GO
+
+CREATE VIEW dbo.v_returns AS
+SELECT invoice, stock_code, description, quantity, unit_price,
+       quantity * unit_price AS revenue,
+       invoice_date, customer_id, country
+FROM dbo.tx_cancel;
+GO
+
+-- Check (expected: v_sales 1003214 rows / 19642692.15, v_returns 17914 rows / -716425.97)
+SELECT 'v_sales' AS view_name, COUNT(*) AS n_rows, SUM(revenue) AS total_revenue FROM dbo.v_sales
+UNION ALL
+SELECT 'v_returns', COUNT(*), SUM(revenue) FROM dbo.v_returns;
