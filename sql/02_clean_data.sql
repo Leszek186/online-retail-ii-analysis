@@ -131,3 +131,26 @@ WHERE NOT ( stock_code LIKE '[0-9][0-9][0-9][0-9][0-9]'
 SELECT 'tx_sales' AS tabela, COUNT(*) AS n_rows FROM dbo.tx_sales
 UNION ALL
 SELECT 'tx_cancel', COUNT(*) FROM dbo.tx_cancel;
+
+
+
+-- 3e. Remove zero/negative quantities and zero prices from sales
+-- Free items, write-offs and stock adjustments are not real sales.
+-- Count rows to remove (expected: 5928)
+SELECT COUNT(*) AS n_to_remove
+FROM dbo.tx_sales
+WHERE quantity <= 0 OR unit_price <= 0;
+
+DELETE
+FROM dbo.tx_sales
+WHERE quantity <= 0 OR unit_price <= 0;
+
+-- Cancellations must have negative quantity and positive price (expected: 0 bad rows)
+SELECT COUNT(*) AS n_bad
+FROM dbo.tx_cancel
+WHERE quantity >= 0 OR unit_price <= 0;
+
+-- Final check (expected: tx_sales 1003214, tx_cancel 17914)
+SELECT 'tx_sales' AS tabela, COUNT(*) AS n_rows FROM dbo.tx_sales
+UNION ALL
+SELECT 'tx_cancel', COUNT(*) FROM dbo.tx_cancel;
