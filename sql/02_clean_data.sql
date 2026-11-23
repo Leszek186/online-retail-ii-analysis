@@ -74,3 +74,25 @@ SELECT invoice, stock_code, description, quantity,
 INTO dbo.tx_dedup
 FROM numbered
 WHERE rn = 1;
+
+
+-- 3c. Split cancellations (invoice starts with 'C') from sales
+-- Count cancellations (expected: 19104)
+SELECT COUNT(*) AS n_cancellations
+FROM dbo.tx_dedup
+WHERE invoice LIKE 'C%';
+
+-- Sales: invoices that do not start with 'C' (expected: 1013932 rows)
+SELECT invoice, stock_code, description, quantity,
+       invoice_date, unit_price, customer_id, country
+INTO dbo.tx_sales
+FROM dbo.tx_dedup
+WHERE invoice NOT LIKE 'C%';
+
+-- Cancellations: invoices that start with 'C' (expected: 19104 rows)
+SELECT invoice, stock_code, description, quantity,
+       invoice_date, unit_price, customer_id, country
+INTO dbo.tx_cancel
+FROM dbo.tx_dedup
+WHERE invoice LIKE 'C%';
+
